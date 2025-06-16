@@ -37,7 +37,7 @@ pipeline {
             steps {
                 sh '''
                     python3 -m venv venv
-                    source venv/bin/activate
+                    . venv/bin/activate
                     pip install --upgrade pip
                     pip install pandas openpyxl
                 '''
@@ -49,7 +49,7 @@ pipeline {
                 script {
                     def timestamp = new Date().format("yyyy-MM-dd_HH-mm-ss")
                     sh """
-                        source venv/bin/activate
+                        . venv/bin/activate
                         python aggregate_payloads.py ${timestamp}
                     """
                 }

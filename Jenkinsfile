@@ -13,9 +13,7 @@ pipeline {
 
         stage('Prepare Directories') {
             steps {
-                script {
-                    sh "mkdir -p ${env.PAYLOAD_DIR}"
-                }
+                sh "mkdir -p ${env.PAYLOAD_DIR}"
             }
         }
 
@@ -30,24 +28,30 @@ pipeline {
                     writeFile file: filename, text: params.payload
                     echo "Payload written to ${filename}"
 
-                    // Clean payload files older than 48 hours (2880 minutes)
-                    sh """
-                        find ${env.PAYLOAD_DIR} -name "*.json" -type f -mmin +2880 -delete
-                    """
+                    sh "find ${env.PAYLOAD_DIR} -name '*.json' -type f -mmin +2880 -delete"
                 }
             }
         }
 
-        stage('Aggregate Payloads (last 24h)') {
+        stage('Setup Virtualenv & Dependencies') {
+            steps {
+                sh '''
+                    python3 -m venv venv
+                    source venv/bin/activate
+                    pip install --upgrade pip
+                    pip install pandas openpyxl
+                '''
+            }
+        }
+
+        stage('Aggregate Payloads') {
             steps {
                 script {
                     def timestamp = new Date().format("yyyy-MM-dd_HH-mm-ss")
-
-                    // Clean previous Excel files before aggregation
-                    sh "rm -f slave*.xlsx"
-
-                    // Run aggregation script
-                    sh "python3 aggregate_payloads.py ${timestamp}"
+                    sh """
+                        source venv/bin/activate
+                        python aggregate_payloads.py ${timestamp}
+                    """
                 }
             }
         }
